@@ -55,6 +55,6 @@ class Eco_bag_estimator extends AdminController
             'formData' => $formData,
         ];
 
-        $this->load->view('eco_bag_estimator/admin/index', $data);
+        $this->load->view(module_views_path('eco_bag_estimator', 'admin/index'), $data);
     }
 }
