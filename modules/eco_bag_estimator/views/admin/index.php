@@ -1,6 +1,9 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php init_head(); ?>
 
-<div class="row">
+<div id="wrapper">
+    <div class="content">
+        <div class="row">
     <div class="col-md-12">
         <div class="eco-bag-estimator" id="eco-bag-estimator-app"
              data-presets='<?php echo html_escape(json_encode($presets, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?>'
@@ -318,6 +321,7 @@
     </div>
 </div>
 
+<?php init_tail(); ?>
 <script>
     window.eco_bag_estimator_translations = <?php echo json_encode([
         'consumption_per_bag'      => _l('eco_bag_estimator_consumption_per_bag'),

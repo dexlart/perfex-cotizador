@@ -16,47 +16,14 @@ class Eco_bag_estimator extends AdminController
             access_denied('eco_bag_estimator');
         }
 
-        $viewData = [
+        $data = [
+            'title'            => _l('eco_bag_estimator'),
             'presets'          => $this->eco_bag_estimator_model->get_presets(),
             'options'          => $this->eco_bag_estimator_model->get_configuration_options(),
             'can_edit_options' => has_permission('eco_bag_estimator', '', 'edit'),
         ];
 
-        $data = array_merge([
-            'title' => _l('eco_bag_estimator'),
-        ], $viewData);
-
-        $viewIdentifier = module_views_path('eco_bag_estimator', 'admin/index');
-        $viewFile       = $viewIdentifier;
-
-        if (substr($viewFile, -4) !== '.php') {
-            $viewFile .= '.php';
-        }
-
-        if (!is_file($viewFile)) {
-            show_error('Eco Bag Estimator view not found: ' . $viewFile);
-        }
-
-        ob_start();
-        extract($viewData, EXTR_SKIP);
-        include $viewFile;
-        $data['content'] = ob_get_clean();
-
-        $layoutView = 'admin/includes/blank';
-        $layoutFile = APPPATH . 'views/' . $layoutView . '.php';
-
-        if (!is_file($layoutFile)) {
-            $alternativeView = 'admin/includes/blank_page';
-            $alternativeFile = APPPATH . 'views/' . $alternativeView . '.php';
-
-            if (is_file($alternativeFile)) {
-                $layoutView = $alternativeView;
-            } else {
-                show_error('Admin layout view not found (looked for admin/includes/blank.php and admin/includes/blank_page.php)');
-            }
-        }
-
-        $this->load->view($layoutView, $data);
+        $this->load->view(module_views_path('eco_bag_estimator', 'admin/index'), $data);
     }
 
     public function calculate()
