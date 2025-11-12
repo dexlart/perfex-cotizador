@@ -55,6 +55,29 @@ class Eco_bag_estimator extends AdminController
             'formData' => $formData,
         ];
 
-        $this->load->view(module_views_path('eco_bag_estimator', 'admin/index'), $data);
+        $viewCandidates = [];
+
+        $moduleViewPath = module_views_path('eco_bag_estimator', 'admin/index');
+        if ($moduleViewPath) {
+            $viewCandidates[] = $moduleViewPath;
+            $viewCandidates[] = $moduleViewPath . '.php';
+        }
+
+        $viewCandidates[] = module_dir_path('eco_bag_estimator', 'views/admin/index.php');
+
+        $viewFile = null;
+        foreach ($viewCandidates as $candidate) {
+            if ($candidate && is_file($candidate)) {
+                $viewFile = $candidate;
+                break;
+            }
+        }
+
+        if (!$viewFile) {
+            show_error('Eco Bag Estimator admin view could not be located.');
+        }
+
+        extract($data, EXTR_SKIP);
+        include $viewFile;
     }
 }
