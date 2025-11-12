@@ -1,6 +1,15 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
+/*
+Module Name: Eco Bag Estimator
+Description: Calculadora/estimador de especificaciones y presets de bolsas reutilizables.
+Version: 1.0.0
+Requires at least: 2.3.*
+Author: Tu Nombre
+Author URI: https://tusitio.com
+*/
+
 register_activation_hook('eco_bag_estimator', 'eco_bag_estimator_install');
 register_deactivation_hook('eco_bag_estimator', 'eco_bag_estimator_uninstall');
 register_language_files('eco_bag_estimator', ['eco_bag_estimator']);
