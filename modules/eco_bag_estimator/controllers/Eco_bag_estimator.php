@@ -42,7 +42,21 @@ class Eco_bag_estimator extends AdminController
         include $viewFile;
         $data['content'] = ob_get_clean();
 
-        $this->load->view('admin/includes/blank', $data);
+        $layoutView = 'admin/includes/blank';
+        $layoutFile = APPPATH . 'views/' . $layoutView . '.php';
+
+        if (!is_file($layoutFile)) {
+            $alternativeView = 'admin/includes/blank_page';
+            $alternativeFile = APPPATH . 'views/' . $alternativeView . '.php';
+
+            if (is_file($alternativeFile)) {
+                $layoutView = $alternativeView;
+            } else {
+                show_error('Admin layout view not found (looked for admin/includes/blank.php and admin/includes/blank_page.php)');
+            }
+        }
+
+        $this->load->view($layoutView, $data);
     }
 
     public function calculate()
