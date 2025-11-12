@@ -1,8 +1,13 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<div class="eco-bag-estimator" id="eco-bag-estimator-app"
-     data-presets='<?php echo html_escape(json_encode($presets, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?>'
-     data-options='<?php echo html_escape(json_encode($options, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?>'
-     data-can-edit-options="<?php echo $can_edit_options ? '1' : '0'; ?>">
+<?php init_head(); ?>
+<div id="wrapper">
+    <div class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="eco-bag-estimator" id="eco-bag-estimator-app"
+                     data-presets='<?php echo html_escape(json_encode($presets, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?>'
+                     data-options='<?php echo html_escape(json_encode($options, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?>'
+                     data-can-edit-options="<?php echo $can_edit_options ? '1' : '0'; ?>">
     <div class="row eco-bag-layout">
         <div class="col-lg-4 col-md-5">
             <div class="eco-bag-card eco-bag-card-form">
@@ -309,9 +314,13 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+        </div><!-- /.eco-bag-layout -->
+    </div><!-- /.eco-bag-estimator -->
+                </div><!-- /.col-md-12 -->
+            </div><!-- /.row -->
+        </div><!-- /.content -->
+    </div><!-- /#wrapper -->
+<?php init_tail(); ?>
 <script>
     window.eco_bag_estimator_translations = <?php echo json_encode([
         'consumption_per_bag'      => _l('eco_bag_estimator_consumption_per_bag'),

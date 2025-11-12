@@ -12,17 +12,15 @@ if (!function_exists('eco_bag_estimator_option')) {
 if (!function_exists('eco_bag_estimator_asset_url')) {
     function eco_bag_estimator_asset_url(string $path = ''): string
     {
-        $adminBase = function_exists('admin_url') ? admin_url() : base_url();
-        $base = preg_replace('#admin/?$#', '', $adminBase);
-
-        if ($base === null || $base === '') {
-            $base = base_url();
-        }
-
-        $base = rtrim($base, '/');
         $path = ltrim($path, '/');
 
-        return $base . '/modules/eco_bag_estimator/' . $path;
+        if (function_exists('module_dir_url')) {
+            return module_dir_url('eco_bag_estimator', $path);
+        }
+
+        $base = rtrim(base_url('modules/eco_bag_estimator'), '/');
+
+        return $base . ($path ? '/' . $path : '');
     }
 }
 
