@@ -3,7 +3,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: Eco Bag Estimator
 Description: Estimador de tela, costos y precio para bolsas ecológicas; permite exportar a producto de Ventas.
-Version: 1.0.0
+Version: 1.1.0
 Requires at least: 2.3.*
 Author: Activación Web
 Author URI: https://activacionweb.mx

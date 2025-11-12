@@ -2,7 +2,7 @@
     "unique_name": "eco-bag-estimator",
     "display_name": "Eco Bag Estimator",
     "description": "Estimador de tela, costos y precio para bolsas ecológicas con exportación a productos.",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "author": "Activación Web",
     "author_uri": "https://activacionweb.mx",
     "type": "module",
