@@ -22,27 +22,25 @@ class Eco_bag_estimator_model extends App_Model
 
     public function get_configuration_options(): array
     {
-        $keys = [
-            'eco_bag_price_per_meter',
-            'eco_bag_stitch_cost_with_gusset',
-            'eco_bag_stitch_cost_drawstring',
-            'eco_bag_stitch_cost_no_gusset',
-            'eco_bag_electricity_per_bag',
-            'eco_bag_misc_percentage',
-            'eco_bag_general_waste_percentage',
-            'eco_bag_fabric_width_m',
-            'eco_bag_layout_length_min_cm',
-            'eco_bag_layout_length_max_cm',
-            'eco_bag_layout_waste_percentage',
-            'eco_bag_handle_width_cm',
-        ];
-
         $options = [];
-        foreach ($keys as $key) {
-            $options[$key] = (float)eco_bag_estimator_option($key, 0);
+        foreach ($this->get_option_definitions() as $key => $default) {
+            $options[$key] = (float)eco_bag_estimator_option($key, $default);
         }
 
         return $options;
+    }
+
+    public function save_configuration_options(array $payload): array
+    {
+        $saved = [];
+
+        foreach ($this->get_option_definitions() as $key => $default) {
+            $value = eco_bag_estimator_safe_float($payload[$key] ?? $default, $default);
+            update_option($key, $value);
+            $saved[$key] = (float)get_option($key);
+        }
+
+        return $saved;
     }
 
     public function calculate(array $payload): array
@@ -153,11 +151,13 @@ class Eco_bag_estimator_model extends App_Model
             'layout_waste_percentage'    => $layoutWastePercentage,
             'price_per_meter'            => $pricePerMeter,
             'price_per_square_meter'     => $pricePerSquareMeter,
+            'fabric_width_m'             => $fabricWidth,
             'unit_cost'                  => $baseProductionCost,
             'unit_price_base'            => $unitPriceBase,
             'price_breakdown'            => $priceForQuantities,
             'margin_percentage'          => $marginPercentage,
             'preset'                     => $preset,
+            'options_snapshot'           => $options,
         ];
 
         return $response;
@@ -281,6 +281,24 @@ class Eco_bag_estimator_model extends App_Model
         }
 
         return $pieces;
+    }
+
+    protected function get_option_definitions(): array
+    {
+        return [
+            'eco_bag_price_per_meter'          => 7.00,
+            'eco_bag_stitch_cost_with_gusset'  => 3.00,
+            'eco_bag_stitch_cost_drawstring'   => 4.00,
+            'eco_bag_stitch_cost_no_gusset'    => 2.00,
+            'eco_bag_electricity_per_bag'      => 0.12,
+            'eco_bag_misc_percentage'          => 3.0,
+            'eco_bag_general_waste_percentage' => 5.0,
+            'eco_bag_fabric_width_m'           => 1.60,
+            'eco_bag_layout_length_min_cm'     => 100.0,
+            'eco_bag_layout_length_max_cm'     => 200.0,
+            'eco_bag_layout_waste_percentage'  => 0.0,
+            'eco_bag_handle_width_cm'          => 9.0,
+        ];
     }
 
     protected function resolve_stitch_cost(string $bagType, array $options): float

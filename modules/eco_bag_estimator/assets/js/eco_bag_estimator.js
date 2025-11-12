@@ -1,13 +1,17 @@
 (function ($) {
     'use strict';
 
-    function parseJSONAttribute($element, attribute) {
-        var raw = $element.attr(attribute) || '[]';
+    function parseJSONAttribute($element, attribute, fallback) {
+        var raw = $element.attr(attribute);
+        if (!raw) {
+            return fallback;
+        }
+
         try {
             return JSON.parse(raw);
         } catch (error) {
             console.error('Invalid JSON in attribute', attribute, error);
-            return [];
+            return fallback;
         }
     }
 
@@ -17,6 +21,14 @@
             minimumFractionDigits: decimals,
             maximumFractionDigits: decimals,
         });
+    }
+
+    function formatCurrency(value, decimals) {
+        return '$' + formatNumber(value, typeof decimals === 'number' ? decimals : 2);
+    }
+
+    function formatPercentage(value, decimals) {
+        return formatNumber(value, typeof decimals === 'number' ? decimals : 2) + '%';
     }
 
     function buildDescription(result) {
@@ -59,9 +71,16 @@
         rows.push(['Área por bolsa (m2)', result.area_per_bag_m2]);
         rows.push(['Área total (m2)', result.total_area_m2]);
         rows.push(['Metros lineales con merma', result.linear_meters_with_waste]);
+        rows.push(['Precio tela por metro', result.price_per_meter]);
+        rows.push(['Precio tela por m2', result.price_per_square_meter]);
+        rows.push(['Ancho de tela (m)', result.fabric_width_m]);
         rows.push(['Costo tela unitario', result.fabric_cost_per_bag]);
         rows.push(['Costo costura unitario', result.stitch_cost_per_bag]);
         rows.push(['Costo electricidad unitario', result.electricity_cost_per_bag]);
+        rows.push(['Merma general (%)', result.general_waste_percentage]);
+        rows.push(['Merma de tendido (%)', result.layout_waste_percentage]);
+        rows.push(['Varios (%)', result.misc_percentage]);
+        rows.push(['Margen aplicado (%)', result.margin_percentage]);
         rows.push(['Costo unitario', result.unit_cost]);
         Object.keys(result.price_breakdown).forEach(function (qty) {
             var item = result.price_breakdown[qty];
@@ -70,8 +89,6 @@
         });
         rows.push(['Vueltas', result.layouts_needed]);
         rows.push(['Longitud tendido (cm)', result.layout_length_cm]);
-        rows.push(['Ancho tela (m)', result.price_per_meter && result.price_per_square_meter ? (result.price_per_meter / result.price_per_square_meter) : '']);
-        rows.push(['Costo tela por metro', result.price_per_meter]);
 
         rows.push(['--- Piezas ---', '']);
         rows.push(['Etiqueta', 'Cantidad', 'Ancho (cm)', 'Alto (cm)', 'Área (m2)']);
@@ -108,18 +125,28 @@
             return;
         }
 
-        var presets = parseJSONAttribute($app, 'data-presets');
-        var options = parseJSONAttribute($app, 'data-options');
+        var presets = parseJSONAttribute($app, 'data-presets', []);
+        var options = parseJSONAttribute($app, 'data-options', {});
+        if (!options || Array.isArray(options)) {
+            options = {};
+        }
+
         var presetMap = {};
         presets.forEach(function (preset) {
             presetMap[preset.model] = preset;
         });
+
+        var translations = window.eco_bag_estimator_translations || {};
+        var canEditOptions = String($app.data('can-edit-options')) === '1';
 
         var $form = $('#eco-bag-estimator-form');
         var $bagType = $('#bag_type');
         var $gussetRow = $('#gusset-row');
         var $layoutRange = $('#layout_length_cm');
         var $layoutValue = $('#layout_length_value');
+        var $optionsForm = $('#eco-bag-options-form');
+        var $optionsFeedback = $('#eco-bag-options-feedback');
+        var $optionMetrics = $('#eco-bag-option-metrics');
         var lastResult = null;
 
         var bagTypeLabels = {
@@ -127,6 +154,10 @@
             'without_gusset': $bagType.find('option[value="without_gusset"]').text(),
             'drawstring': $bagType.find('option[value="drawstring"]').text(),
         };
+
+        function updateOptionLocalCache(newOptions) {
+            options = $.extend({}, options, newOptions || {});
+        }
 
         function updateGussetVisibility() {
             if ($bagType.val() === 'with_gusset') {
@@ -138,6 +169,139 @@
 
         function updateLayoutValue() {
             $layoutValue.text($layoutRange.val());
+        }
+
+        function applyLayoutBounds() {
+            if (!options) {
+                return;
+            }
+
+            if (typeof options.eco_bag_layout_length_min_cm !== 'undefined') {
+                $layoutRange.attr('min', options.eco_bag_layout_length_min_cm);
+            }
+            if (typeof options.eco_bag_layout_length_max_cm !== 'undefined') {
+                $layoutRange.attr('max', options.eco_bag_layout_length_max_cm);
+            }
+
+            var min = parseFloat($layoutRange.attr('min')) || 0;
+            var max = parseFloat($layoutRange.attr('max')) || min;
+            if (min > max) {
+                max = min;
+                $layoutRange.attr('max', max);
+            }
+
+            var current = parseFloat($layoutRange.val());
+            if (isNaN(current) || current < min || current > max) {
+                $layoutRange.val(min);
+            }
+
+            updateLayoutValue();
+        }
+
+        function populateOptionsForm() {
+            if (!$optionsForm.length) {
+                return;
+            }
+
+            $optionsForm.find('input[name]').each(function () {
+                var $input = $(this);
+                var name = $input.attr('name');
+                if (typeof options[name] !== 'undefined') {
+                    $input.val(options[name]);
+                }
+            });
+        }
+
+        function renderOptionMetrics() {
+            if (!$optionMetrics.length) {
+                return;
+            }
+
+            $optionMetrics.find('.eco-bag-metric').each(function () {
+                var $metric = $(this);
+                var key = $metric.data('option');
+                if (!key) {
+                    return;
+                }
+                var value = options[key];
+                var type = $metric.data('type') || 'number';
+                var suffix = $metric.data('suffix') || '';
+                var formatted = '—';
+
+                if (typeof value !== 'undefined' && value !== null && value !== '') {
+                    switch (type) {
+                        case 'currency':
+                            formatted = formatCurrency(value);
+                            break;
+                        case 'percentage':
+                            formatted = formatPercentage(value);
+                            break;
+                        default:
+                            formatted = formatNumber(value, 2);
+                            break;
+                    }
+                }
+
+                $metric.find('.eco-bag-metric-value').text(formatted + suffix);
+            });
+        }
+
+        function showOptionsFeedback(type, message) {
+            if (!$optionsFeedback.length) {
+                return;
+            }
+
+            if (!message) {
+                $optionsFeedback.addClass('hidden').removeClass('alert-success alert-danger alert-info');
+                $optionsFeedback.text('');
+                return;
+            }
+
+            $optionsFeedback.removeClass('hidden alert-success alert-danger alert-info');
+            if (type === 'success') {
+                $optionsFeedback.addClass('alert-success');
+            } else if (type === 'info') {
+                $optionsFeedback.addClass('alert-info');
+            } else {
+                $optionsFeedback.addClass('alert-danger');
+            }
+            $optionsFeedback.text(message);
+        }
+
+        function bindOptionsForm() {
+            if (!$optionsForm.length) {
+                return;
+            }
+
+            $optionsForm.on('submit', function (event) {
+                event.preventDefault();
+
+                var $button = $('#eco-bag-options-save').prop('disabled', true);
+                showOptionsFeedback('info', translations.options_saving || '...');
+
+                $.post(admin_url('eco_bag_estimator/update_options'), $optionsForm.serialize())
+                    .done(function (response) {
+                        if (response && response.status) {
+                            updateOptionLocalCache(response.data || {});
+                            renderOptionMetrics();
+                            populateOptionsForm();
+                            applyLayoutBounds();
+                            showOptionsFeedback('success', response.message || translations.options_saved);
+                        } else {
+                            showOptionsFeedback('danger', (response && response.message) || translations.options_error);
+                        }
+                    })
+                    .fail(function (xhr) {
+                        var message = translations.options_error;
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        showOptionsFeedback('danger', message);
+                    })
+                    .always(function () {
+                        $button.prop('disabled', false);
+                    });
+            });
         }
 
         function fillPreset(model) {
@@ -183,10 +347,17 @@
             updateLayoutValue();
         });
 
-        if (options && options.eco_bag_layout_length_min_cm) {
+        if (typeof options.eco_bag_layout_length_min_cm !== 'undefined') {
             $layoutRange.val(options.eco_bag_layout_length_min_cm);
         }
-        updateLayoutValue();
+
+        renderOptionMetrics();
+        populateOptionsForm();
+        applyLayoutBounds();
+        if (canEditOptions) {
+            showOptionsFeedback(null);
+            bindOptionsForm();
+        }
         updateGussetVisibility();
 
         function renderResult(result) {
@@ -194,6 +365,13 @@
             $('#eco-bag-results').removeClass('hidden');
             $('#eco-bag-error').addClass('hidden');
             $('#eco-bag-success').addClass('hidden');
+
+            if (result.options_snapshot) {
+                updateOptionLocalCache(result.options_snapshot);
+                renderOptionMetrics();
+                populateOptionsForm();
+                applyLayoutBounds();
+            }
 
             var $piecesList = $('#eco-bag-pieces-list');
             $piecesList.empty();
@@ -204,25 +382,47 @@
 
             var $consumption = $('#eco-bag-consumption');
             $consumption.empty();
-            $consumption.append($('<li>').text(window.eco_bag_estimator_translations.consumption_per_bag + ': ' + formatNumber(result.area_per_bag_m2, 4) + ' m²'));
-            $consumption.append($('<li>').text(window.eco_bag_estimator_translations.total_area + ': ' + formatNumber(result.total_area_m2, 4) + ' m²'));
-            $consumption.append($('<li>').text(window.eco_bag_estimator_translations.layout_area + ': ' + formatNumber(result.layout_area_m2, 4) + ' m²'));
-            $consumption.append($('<li>').text(window.eco_bag_estimator_translations.layouts + ': ' + result.layouts_needed));
-            $consumption.append($('<li>').text(window.eco_bag_estimator_translations.linear_meters + ': ' + formatNumber(result.linear_meters_base, 3) + ' m'));
-            $consumption.append($('<li>').text(window.eco_bag_estimator_translations.linear_meters_waste + ': ' + formatNumber(result.linear_meters_with_waste, 3) + ' m'));
+            $consumption.append($('<li>').text(translations.consumption_per_bag + ': ' + formatNumber(result.area_per_bag_m2, 4) + ' m²'));
+            $consumption.append($('<li>').text(translations.total_area + ': ' + formatNumber(result.total_area_m2, 4) + ' m²'));
+            $consumption.append($('<li>').text(translations.layout_area + ': ' + formatNumber(result.layout_area_m2, 4) + ' m²'));
+            $consumption.append($('<li>').text(translations.layouts + ': ' + result.layouts_needed));
+            $consumption.append($('<li>').text(translations.linear_meters + ': ' + formatNumber(result.linear_meters_base, 3) + ' m'));
+            $consumption.append($('<li>').text(translations.linear_meters_waste + ': ' + formatNumber(result.linear_meters_with_waste, 3) + ' m'));
 
             var $costs = $('#eco-bag-costs');
             $costs.empty();
-            $costs.append($('<li>').text(window.eco_bag_estimator_translations.fabric_cost + ': $' + formatNumber(result.fabric_cost_per_bag, 2)));
-            $costs.append($('<li>').text(window.eco_bag_estimator_translations.stitch_cost + ': $' + formatNumber(result.stitch_cost_per_bag, 2)));
-            $costs.append($('<li>').text(window.eco_bag_estimator_translations.electricity_cost + ': $' + formatNumber(result.electricity_cost_per_bag, 2)));
-            $costs.append($('<li>').text(window.eco_bag_estimator_translations.unit_cost + ': $' + formatNumber(result.unit_cost, 2)));
+            $costs.append($('<li>').text(translations.fabric_cost + ': ' + formatCurrency(result.fabric_cost_per_bag)));
+            $costs.append($('<li>').text(translations.stitch_cost + ': ' + formatCurrency(result.stitch_cost_per_bag)));
+            $costs.append($('<li>').text(translations.electricity_cost + ': ' + formatCurrency(result.electricity_cost_per_bag)));
+
+            if (typeof result.price_per_meter !== 'undefined') {
+                $costs.append($('<li>').text(translations.price_per_meter + ': ' + formatCurrency(result.price_per_meter) + (translations.price_per_meter_suffix || '')));
+            }
+            if (typeof result.price_per_square_meter !== 'undefined') {
+                $costs.append($('<li>').text(translations.price_per_square_meter + ': ' + formatCurrency(result.price_per_square_meter) + (translations.price_per_square_suffix || '')));
+            }
+            if (typeof result.fabric_width_m !== 'undefined') {
+                $costs.append($('<li>').text(translations.fabric_width + ': ' + formatNumber(result.fabric_width_m, 2) + ' m'));
+            }
+            if (typeof result.general_waste_percentage !== 'undefined') {
+                $costs.append($('<li>').text(translations.general_waste + ': ' + formatPercentage(result.general_waste_percentage)));
+            }
+            if (typeof result.layout_waste_percentage !== 'undefined') {
+                $costs.append($('<li>').text(translations.layout_waste + ': ' + formatPercentage(result.layout_waste_percentage)));
+            }
+            if (typeof result.misc_percentage !== 'undefined') {
+                $costs.append($('<li>').text(translations.misc_percentage + ': ' + formatPercentage(result.misc_percentage)));
+            }
+            if (typeof result.margin_percentage !== 'undefined') {
+                $costs.append($('<li>').text(translations.margin + ': ' + formatPercentage(result.margin_percentage)));
+            }
+            $costs.append($('<li>').text(translations.unit_cost + ': ' + formatCurrency(result.unit_cost)));
 
             var $prices = $('#eco-bag-prices');
             $prices.empty();
             Object.keys(result.price_breakdown).sort(function (a, b) { return parseInt(a, 10) - parseInt(b, 10); }).forEach(function (quantity) {
                 var priceData = result.price_breakdown[quantity];
-                var line = quantity + ' pzs — $' + formatNumber(priceData.unit_price, 2) + ' ' + window.eco_bag_estimator_translations.per_unit + ' / $' + formatNumber(priceData.total_price, 2) + ' ' + window.eco_bag_estimator_translations.total;
+                var line = quantity + ' pzs — ' + formatCurrency(priceData.unit_price) + ' ' + translations.per_unit + ' / ' + formatCurrency(priceData.total_price) + ' ' + translations.total;
                 $('<li>').text(line).appendTo($prices);
             });
         }
@@ -240,11 +440,11 @@
                         lastResult = response.data;
                         renderResult(response.data);
                     } else {
-                        $('#eco-bag-error').removeClass('hidden').text(response.message || 'Error');
+                        $('#eco-bag-error').removeClass('hidden').text(response.message || translations.generic_error || 'Error');
                     }
                 })
                 .fail(function (xhr) {
-                    var message = 'Error';
+                    var message = translations.generic_error || 'Error';
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         message = xhr.responseJSON.message;
                     }
