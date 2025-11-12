@@ -9,6 +9,8 @@ Author: Activación Web
 Author URI: https://activacionweb.mx
 */
 
+require_once __DIR__ . '/helpers/eco_bag_estimator_helper.php';
+
 register_activation_hook('eco_bag_estimator', 'eco_bag_estimator_module_activation');
 register_deactivation_hook('eco_bag_estimator', 'eco_bag_estimator_module_deactivation');
 register_uninstall_hook('eco_bag_estimator', 'eco_bag_estimator_module_uninstall');
@@ -76,10 +78,22 @@ function eco_bag_estimator_register_permissions()
 
 function eco_bag_estimator_load_admin_head_assets()
 {
-    echo '<link rel="stylesheet" href="' . module_dir_url('eco_bag_estimator', 'assets/css/eco_bag_estimator.css') . '">' . PHP_EOL;
+    if (defined('ECO_BAG_ESTIMATOR_ASSETS_HEAD')) {
+        return;
+    }
+
+    define('ECO_BAG_ESTIMATOR_ASSETS_HEAD', true);
+
+    echo '<link rel="stylesheet" href="' . eco_bag_estimator_asset_url('assets/css/eco_bag_estimator.css') . '">' . PHP_EOL;
 }
 
 function eco_bag_estimator_load_admin_footer_assets()
 {
-    echo '<script src="' . module_dir_url('eco_bag_estimator', 'assets/js/eco_bag_estimator.js') . '"></script>' . PHP_EOL;
+    if (defined('ECO_BAG_ESTIMATOR_ASSETS_FOOTER')) {
+        return;
+    }
+
+    define('ECO_BAG_ESTIMATOR_ASSETS_FOOTER', true);
+
+    echo '<script src="' . eco_bag_estimator_asset_url('assets/js/eco_bag_estimator.js') . '"></script>' . PHP_EOL;
 }
