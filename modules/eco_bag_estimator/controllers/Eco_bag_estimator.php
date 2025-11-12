@@ -16,13 +16,23 @@ class Eco_bag_estimator extends AdminController
             access_denied('eco_bag_estimator');
         }
 
-        $data['title']             = _l('eco_bag_estimator');
-        $data['presets']           = $this->eco_bag_estimator_model->get_presets();
-        $data['options']           = $this->eco_bag_estimator_model->get_configuration_options();
-        $data['can_edit_options']  = has_permission('eco_bag_estimator', '', 'edit');
+        $viewData = [
+            'presets'          => $this->eco_bag_estimator_model->get_presets(),
+            'options'          => $this->eco_bag_estimator_model->get_configuration_options(),
+            'can_edit_options' => has_permission('eco_bag_estimator', '', 'edit'),
+        ];
 
-        $viewPath = module_views_path('eco_bag_estimator', 'admin/index');
-        $this->load->view($this->normalize_module_view_path($viewPath), $data);
+        $data = array_merge([
+            'title' => _l('eco_bag_estimator'),
+        ], $viewData);
+
+        $data['content'] = $this->load->view(
+            module_views_path('eco_bag_estimator', 'admin/index'),
+            $viewData,
+            true
+        );
+
+        $this->load->view('admin/includes/blank', $data);
     }
 
     public function calculate()
@@ -105,45 +115,4 @@ class Eco_bag_estimator extends AdminController
         }
     }
 
-    /**
-     * Perfex installations placed in subdirectories can resolve module_views_path
-     * to an absolute filesystem path. This helper converts any absolute
-     * reference into the relative identifier that CI's loader expects while
-     * keeping plain identifiers untouched.
-     */
-    private function normalize_module_view_path($viewPath)
-    {
-        $normalized = str_replace('\\', '/', $viewPath);
-
-        $prefixes = [];
-
-        if (defined('FCPATH')) {
-            $prefixes[] = rtrim(FCPATH, '/') . '/modules/eco_bag_estimator/views/';
-        }
-
-        if (defined('APPPATH')) {
-            $prefixes[] = APPPATH . 'modules/eco_bag_estimator/views/';
-        }
-
-        $prefixes[] = 'modules/eco_bag_estimator/views/';
-
-        foreach ($prefixes as $prefix) {
-            if (strpos($normalized, $prefix) === 0) {
-                $normalized = substr($normalized, strlen($prefix));
-                break;
-            }
-        }
-
-        $normalized = ltrim($normalized, '/');
-
-        if ($normalized === '' || $normalized === $viewPath) {
-            return $viewPath;
-        }
-
-        if (substr($normalized, -4) === '.php') {
-            $normalized = substr($normalized, 0, -4);
-        }
-
-        return 'eco_bag_estimator/' . $normalized;
-    }
 }

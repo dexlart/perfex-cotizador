@@ -14,13 +14,7 @@ if (!function_exists('eco_bag_estimator_asset_url')) {
     {
         $path = ltrim($path, '/');
 
-        if (function_exists('module_dir_url')) {
-            return module_dir_url('eco_bag_estimator', $path);
-        }
-
-        $base = rtrim(base_url('modules/eco_bag_estimator'), '/');
-
-        return $base . ($path ? '/' . $path : '');
+        return module_dir_url('eco_bag_estimator', $path);
     }
 }
 
