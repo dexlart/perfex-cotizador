@@ -1,0 +1,15 @@
+{
+    "unique_name": "eco-bag-estimator",
+    "display_name": "Cotizador de Bolsas Ecológicas",
+    "description": "Calculadora de costos y materiales para bolsas ecológicas dentro de Perfex CRM.",
+    "version": "1.0.0",
+    "author": "Perfex Cotizador",
+    "author_uri": "https://example.com",
+    "min_app_version": "3.0.0",
+    "requires_purchase_code": false,
+    "files": [
+        {
+            "module": "modules/eco_bag_estimator"
+        }
+    ]
+}
