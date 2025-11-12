@@ -13,6 +13,7 @@ register_activation_hook('eco_bag_estimator', 'eco_bag_estimator_module_activati
 register_deactivation_hook('eco_bag_estimator', 'eco_bag_estimator_module_deactivation');
 register_uninstall_hook('eco_bag_estimator', 'eco_bag_estimator_module_uninstall');
 
+hooks()->add_action('admin_init', 'eco_bag_estimator_seed_presets_if_needed', 1);
 hooks()->add_action('admin_init', 'eco_bag_estimator_register_menu');
 hooks()->add_action('admin_init', 'eco_bag_estimator_register_permissions');
 hooks()->add_action('app_admin_head', 'eco_bag_estimator_load_admin_head_assets');
@@ -35,6 +36,12 @@ function eco_bag_estimator_module_uninstall()
 {
     require_once __DIR__ . '/install.php';
     eco_bag_estimator_run_uninstall();
+}
+
+function eco_bag_estimator_seed_presets_if_needed()
+{
+    require_once __DIR__ . '/install.php';
+    eco_bag_estimator_sync_seed_presets();
 }
 
 function eco_bag_estimator_register_menu()

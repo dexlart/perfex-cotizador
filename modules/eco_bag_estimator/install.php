@@ -41,31 +41,7 @@ function eco_bag_estimator_run_install()
         }
     }
 
-    $preset = [
-        'model'            => 'BCF-301',
-        'name'             => 'Bolsa con fuelle chica',
-        'specs_json'       => json_encode([
-            'bag_type' => 'with_gusset',
-            'base_cm'  => 30,
-            'height_cm'=> 36,
-            'gusset_cm'=> 12,
-            'handle_cm'=> 50,
-            'pieces'   => [
-                ['label' => 'Cuerpo envuelto', 'width_cm' => 32, 'height_cm' => 92, 'quantity' => 1],
-                ['label' => 'Asa', 'width_cm' => 50, 'height_cm' => 9, 'quantity' => 2],
-                ['label' => 'Fuelle', 'width_cm' => 12, 'height_cm' => 40, 'quantity' => 2],
-            ],
-        ], JSON_UNESCAPED_UNICODE),
-        'hidden_costs_json' => json_encode([
-            'layout_waste_percentage' => (float)get_option('eco_bag_layout_waste_percentage'),
-        ]),
-        'created_at'       => date('Y-m-d H:i:s'),
-    ];
-
-    $exists = $CI->db->where('model', $preset['model'])->get($table)->row();
-    if (!$exists) {
-        $CI->db->insert($table, $preset);
-    }
+    eco_bag_estimator_sync_seed_presets();
 }
 
 function eco_bag_estimator_run_uninstall()
@@ -75,5 +51,270 @@ function eco_bag_estimator_run_uninstall()
 
     if ($CI->db->table_exists($table)) {
         $CI->db->query('DROP TABLE `' . $table . '`');
+    }
+}
+
+if (!function_exists('eco_bag_estimator_sync_seed_presets')) {
+    function eco_bag_estimator_sync_seed_presets()
+    {
+        $CI = &get_instance();
+        if (!$CI) {
+            return;
+        }
+
+        $table = db_prefix() . 'eco_bag_estimator_presets';
+        if (!$CI->db->table_exists($table)) {
+            return;
+        }
+
+        $seedMetadata = [
+            'layout_waste_percentage' => (float)get_option('eco_bag_layout_waste_percentage'),
+            'seed'                    => true,
+        ];
+
+        $presets = eco_bag_estimator_seed_presets_data();
+
+        // Remove legacy default model if present
+        $CI->db->where('model', 'BCF-301')->delete($table);
+
+        foreach ($presets as $preset) {
+            $data = [
+                'name'             => $preset['name'],
+                'specs_json'       => json_encode($preset['specs'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'hidden_costs_json'=> json_encode($seedMetadata, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            ];
+
+            $existing = $CI->db->where('model', $preset['model'])->get($table)->row();
+            if ($existing) {
+                $CI->db->where('id', $existing->id)->update($table, $data);
+            } else {
+                $data['model'] = $preset['model'];
+                $data['created_at'] = date('Y-m-d H:i:s');
+                $CI->db->insert($table, $data);
+            }
+        }
+    }
+}
+
+if (!function_exists('eco_bag_estimator_seed_presets_data')) {
+    function eco_bag_estimator_seed_presets_data(): array
+    {
+        $estimateHandle = static function (float $base) {
+            $base = max(0, $base);
+            $length = ($base * 2) + 20;
+            return round(max($length, 30), 2);
+        };
+
+        return [
+            [
+                'model' => 'BPM-1101',
+                'name'  => 'Bolsa Plana de Manta con Asas Base 25cm, Altura 30cm, Asas 45cm',
+                'specs' => [
+                    'bag_type'  => 'without_gusset',
+                    'base_cm'   => 25,
+                    'height_cm' => 30,
+                    'gusset_cm' => 0,
+                    'handle_cm' => 45,
+                ],
+            ],
+            [
+                'model' => 'BPM-1102',
+                'name'  => 'Bolsa Plana de Manta con Asas Base 32cm, Altura 25cm, Asas 45cm',
+                'specs' => [
+                    'bag_type'  => 'without_gusset',
+                    'base_cm'   => 32,
+                    'height_cm' => 25,
+                    'gusset_cm' => 0,
+                    'handle_cm' => 45,
+                ],
+            ],
+            [
+                'model' => 'BPM-1103',
+                'name'  => 'Bolsa Plana de Manta con Asas Base 33cm, Altura 40cm, Asas 50cm',
+                'specs' => [
+                    'bag_type'  => 'without_gusset',
+                    'base_cm'   => 33,
+                    'height_cm' => 40,
+                    'gusset_cm' => 0,
+                    'handle_cm' => 50,
+                ],
+            ],
+            [
+                'model' => 'BPM-1104',
+                'name'  => 'Bolsa Plana de Manta con Asas Base 40cm, Altura 45cm, Asas 60cm',
+                'specs' => [
+                    'bag_type'  => 'without_gusset',
+                    'base_cm'   => 40,
+                    'height_cm' => 45,
+                    'gusset_cm' => 0,
+                    'handle_cm' => 60,
+                ],
+            ],
+            [
+                'model' => 'BPM-1105',
+                'name'  => 'Bolsa Plana de Manta con Asas Base 45cm, Altura 35cm, Asas 55cm',
+                'specs' => [
+                    'bag_type'  => 'without_gusset',
+                    'base_cm'   => 45,
+                    'height_cm' => 35,
+                    'gusset_cm' => 0,
+                    'handle_cm' => 55,
+                ],
+            ],
+            [
+                'model' => 'BFSM-1201',
+                'name'  => 'Bolsa Plana de Manta con Fuelle Simulado Inferior y Asas, Base 33cm, Altura 24cm, Fuelle 8cm, Asas 45cm',
+                'specs' => [
+                    'bag_type'  => 'with_gusset',
+                    'base_cm'   => 33,
+                    'height_cm' => 24,
+                    'gusset_cm' => 8,
+                    'handle_cm' => 45,
+                ],
+            ],
+            [
+                'model' => 'BFSM-1202',
+                'name'  => 'Bolsa Plana de Manta con Fuelle Simulado Inferior y Asas, Base 33cm, Altura 38cm, Fuelle 10cm, Asas 50cm',
+                'specs' => [
+                    'bag_type'  => 'with_gusset',
+                    'base_cm'   => 33,
+                    'height_cm' => 38,
+                    'gusset_cm' => 10,
+                    'handle_cm' => 50,
+                ],
+            ],
+            [
+                'model' => 'BFSM-1203',
+                'name'  => 'Bolsa Plana de Manta con Fuelle Simulado Inferior y Asas, Base 42cm, Altura 35cm, Fuelle 12cm, Asas 60cm',
+                'specs' => [
+                    'bag_type'  => 'with_gusset',
+                    'base_cm'   => 42,
+                    'height_cm' => 35,
+                    'gusset_cm' => 12,
+                    'handle_cm' => 60,
+                ],
+            ],
+            [
+                'model' => 'BFSM-1204',
+                'name'  => 'Bolsa Plana de Manta con Fuelle Simulado Inferior y Asas, Base 42cm, Altura 45cm, Fuelle 12cm, Asas 60cm',
+                'specs' => [
+                    'bag_type'  => 'with_gusset',
+                    'base_cm'   => 42,
+                    'height_cm' => 45,
+                    'gusset_cm' => 12,
+                    'handle_cm' => 60,
+                ],
+            ],
+            [
+                'model' => 'BFM-1301',
+                'name'  => 'Bolsa de Manta con Fuelle, Bies Perimetral y Asas, Base 32cm, Altura 38cm, Fuelle 12cm, Asas 50cm',
+                'specs' => [
+                    'bag_type'  => 'with_gusset',
+                    'base_cm'   => 32,
+                    'height_cm' => 38,
+                    'gusset_cm' => 12,
+                    'handle_cm' => 50,
+                ],
+            ],
+            [
+                'model' => 'BFM-1302',
+                'name'  => 'Bolsa de Manta con Fuelle, Bies Perimetral y Asas Base, 40cm, Altura 45cm, Fuelle 15cm, Asas 60cm',
+                'specs' => [
+                    'bag_type'  => 'with_gusset',
+                    'base_cm'   => 40,
+                    'height_cm' => 45,
+                    'gusset_cm' => 15,
+                    'handle_cm' => 60,
+                ],
+            ],
+            [
+                'model' => 'CJM-1401',
+                'name'  => 'Costal de Manta con Jareta de Algodón, Base 33cm, Altura 40cm',
+                'specs' => [
+                    'bag_type'  => 'drawstring',
+                    'base_cm'   => 33,
+                    'height_cm' => 40,
+                    'gusset_cm' => 0,
+                    'handle_cm' => $estimateHandle(33),
+                ],
+            ],
+            [
+                'model' => 'CDJM-1451',
+                'name'  => 'Costal de Manta con Doble Jareta de Algodón, Base 9cm, Altura 14cm',
+                'specs' => [
+                    'bag_type'  => 'drawstring',
+                    'base_cm'   => 9,
+                    'height_cm' => 14,
+                    'gusset_cm' => 0,
+                    'handle_cm' => $estimateHandle(9),
+                ],
+            ],
+            [
+                'model' => 'CDJM-1452',
+                'name'  => 'Costal de Manta con Doble Jareta de Algodón, Base 14cm, Altura 20cm',
+                'specs' => [
+                    'bag_type'  => 'drawstring',
+                    'base_cm'   => 14,
+                    'height_cm' => 20,
+                    'gusset_cm' => 0,
+                    'handle_cm' => $estimateHandle(14),
+                ],
+            ],
+            [
+                'model' => 'CDJM-1453',
+                'name'  => 'Costal de Manta con Doble Jareta de Algodón, Base 16cm, Altura 25cm',
+                'specs' => [
+                    'bag_type'  => 'drawstring',
+                    'base_cm'   => 16,
+                    'height_cm' => 25,
+                    'gusset_cm' => 0,
+                    'handle_cm' => $estimateHandle(16),
+                ],
+            ],
+            [
+                'model' => 'CDJM-1454',
+                'name'  => 'Costal de Manta con Doble Jareta de Algodón, Base 18cm, Altura 30cm',
+                'specs' => [
+                    'bag_type'  => 'drawstring',
+                    'base_cm'   => 18,
+                    'height_cm' => 30,
+                    'gusset_cm' => 0,
+                    'handle_cm' => $estimateHandle(18),
+                ],
+            ],
+            [
+                'model' => 'CDJM-1455',
+                'name'  => 'Costal de Manta con Doble Jareta de Algodón, Base 23cm, Altura 32cm',
+                'specs' => [
+                    'bag_type'  => 'drawstring',
+                    'base_cm'   => 23,
+                    'height_cm' => 32,
+                    'gusset_cm' => 0,
+                    'handle_cm' => $estimateHandle(23),
+                ],
+            ],
+            [
+                'model' => 'MM-1501',
+                'name'  => 'Morral de Manta con Jaretas de Algodón y Ojillos de Metal, Base 33cm Altura 40cm',
+                'specs' => [
+                    'bag_type'  => 'drawstring',
+                    'base_cm'   => 33,
+                    'height_cm' => 40,
+                    'gusset_cm' => 0,
+                    'handle_cm' => $estimateHandle(33),
+                ],
+            ],
+            [
+                'model' => 'BBM-1801',
+                'name'  => 'Bolsa de Manta con Base y Doble Jareta, Base 8x8cm, Altura 36cm',
+                'specs' => [
+                    'bag_type'  => 'drawstring',
+                    'base_cm'   => 8,
+                    'height_cm' => 36,
+                    'gusset_cm' => 8,
+                    'handle_cm' => $estimateHandle(8),
+                ],
+            ],
+        ];
     }
 }
