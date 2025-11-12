@@ -1,75 +1,52 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-if (!function_exists('eco_bag_estimator_models')) {
-    function eco_bag_estimator_models(): array
+if (!function_exists('eco_bag_estimator_option')) {
+    function eco_bag_estimator_option(string $key, $default = null)
     {
-        $path = module_dir_path('eco_bag_estimator', 'config/bag_models.php');
-
-        if (!file_exists($path)) {
-            return [];
-        }
-
-        return include $path;
+        $value = get_option($key);
+        return $value === false ? $default : $value;
     }
 }
 
-if (!function_exists('eco_bag_estimator_model')) {
-    function eco_bag_estimator_model(string $slug): ?array
+if (!function_exists('eco_bag_estimator_cm_to_m')) {
+    function eco_bag_estimator_cm_to_m($centimeters)
     {
-        $models = eco_bag_estimator_models();
-
-        return $models[$slug] ?? null;
+        return (float)$centimeters / 100;
     }
 }
 
-if (!function_exists('eco_bag_estimator_products')) {
-    function eco_bag_estimator_products(): array
+if (!function_exists('eco_bag_estimator_m_to_cm')) {
+    function eco_bag_estimator_m_to_cm($meters)
     {
-        $path = module_dir_path('eco_bag_estimator', 'config/products.php');
-
-        if (!file_exists($path)) {
-            return [];
-        }
-
-        return include $path;
+        return (float)$meters * 100;
     }
 }
 
-if (!function_exists('eco_bag_estimator_product')) {
-    function eco_bag_estimator_product(?string $slug): ?array
+if (!function_exists('eco_bag_estimator_format_number')) {
+    function eco_bag_estimator_format_number($number, int $decimals = 2)
     {
-        if ($slug === null) {
-            return null;
-        }
-
-        $products = eco_bag_estimator_products();
-
-        return $products[$slug] ?? null;
+        return number_format((float)$number, $decimals, '.', ',');
     }
 }
 
-if (!function_exists('eco_bag_estimator_products_by_category')) {
-    function eco_bag_estimator_products_by_category(): array
+if (!function_exists('eco_bag_estimator_piece_area_m2')) {
+    function eco_bag_estimator_piece_area_m2(array $piece)
     {
-        $products = eco_bag_estimator_products();
-        $grouped = [];
+        $width = eco_bag_estimator_cm_to_m($piece['width_cm'] ?? 0);
+        $height = eco_bag_estimator_cm_to_m($piece['height_cm'] ?? 0);
+        $quantity = (int)($piece['quantity'] ?? 1);
 
-        foreach ($products as $slug => $product) {
-            $category = $product['category'] ?? (function_exists('_l') ? _l('eco_bag_estimator_category_uncategorized') : 'Sin categoría');
+        return $width * $height * $quantity;
+    }
+}
 
-            if (!isset($grouped[$category])) {
-                $grouped[$category] = [
-                    'name' => $category,
-                    'items' => [],
-                ];
-            }
-
-            $grouped[$category]['items'][$slug] = $product;
+if (!function_exists('eco_bag_estimator_safe_float')) {
+    function eco_bag_estimator_safe_float($value, $default = 0.0)
+    {
+        if ($value === null || $value === '') {
+            return (float)$default;
         }
-
-        ksort($grouped);
-
-        return $grouped;
+        return (float)$value;
     }
 }

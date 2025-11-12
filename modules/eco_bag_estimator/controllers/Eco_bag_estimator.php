@@ -16,68 +16,62 @@ class Eco_bag_estimator extends AdminController
             access_denied('eco_bag_estimator');
         }
 
-        $models = eco_bag_estimator_models();
-        $productsFlat = eco_bag_estimator_products();
-        $productsByCategory = eco_bag_estimator_products_by_category();
-        $result = null;
-        $formData = $this->input->post() ?: [];
-        $selectedProductSlug = $formData['product_slug'] ?? null;
-        $selectedProduct = $selectedProductSlug && isset($productsFlat[$selectedProductSlug])
-            ? array_merge(['slug' => $selectedProductSlug], $productsFlat[$selectedProductSlug])
-            : null;
+        $data['title'] = _l('eco_bag_estimator');
+        $data['presets'] = $this->eco_bag_estimator_model->get_presets();
+        $data['options'] = $this->eco_bag_estimator_model->get_configuration_options();
 
-        if (!$selectedProduct && !empty($productsFlat)) {
-            $firstSlug = array_key_first($productsFlat);
-            $selectedProduct = array_merge(['slug' => $firstSlug], $productsFlat[$firstSlug]);
-            $selectedProductSlug = $firstSlug;
+        $this->load->view(module_views_path('eco_bag_estimator', 'admin/index'), $data);
+    }
 
-            if (empty($formData)) {
-                $formData['product_slug'] = $firstSlug;
-            }
+    public function calculate()
+    {
+        if (!has_permission('eco_bag_estimator', '', 'view') && !has_permission('eco_bag_estimator', '', 'create')) {
+            access_denied('eco_bag_estimator');
         }
 
-        if ($this->input->method() === 'post') {
-            try {
-                $result = $this->eco_bag_estimator_model->calculate($this->input->post());
-                set_alert('success', _l('eco_bag_estimator_calculated_successfully'));
-            } catch (Throwable $exception) {
-                set_alert('danger', $exception->getMessage());
-            }
+        $this->output->set_content_type('application/json');
+
+        try {
+            $payload = $this->input->post(null, true);
+            $result = $this->eco_bag_estimator_model->calculate($payload);
+            $this->output->set_output(json_encode([
+                'status' => true,
+                'data'   => $result,
+            ]));
+        } catch (Exception $exception) {
+            log_message('error', 'Eco Bag Estimator calculate error: ' . $exception->getMessage());
+            $this->output->set_status_header(400);
+            $this->output->set_output(json_encode([
+                'status'  => false,
+                'message' => $exception->getMessage(),
+            ]));
+        }
+    }
+
+    public function save_as_product()
+    {
+        if (!has_permission('eco_bag_estimator', '', 'create')) {
+            access_denied('eco_bag_estimator');
         }
 
-        $data = [
-            'title' => _l('eco_bag_estimator'),
-            'models' => $models,
-            'productsByCategory' => $productsByCategory,
-            'productsFlat' => $productsFlat,
-            'selectedProduct' => $selectedProduct,
-            'result' => $result,
-            'formData' => $formData,
-        ];
+        $this->output->set_content_type('application/json');
 
-        $viewCandidates = [];
+        try {
+            $payload = $this->input->post(null, true);
+            $productId = $this->eco_bag_estimator_model->save_as_product($payload);
 
-        $moduleViewPath = module_views_path('eco_bag_estimator', 'admin/index');
-        if ($moduleViewPath) {
-            $viewCandidates[] = $moduleViewPath;
-            $viewCandidates[] = $moduleViewPath . '.php';
+            $this->output->set_output(json_encode([
+                'status'  => true,
+                'message' => _l('eco_bag_estimator_saved_product'),
+                'id'      => $productId,
+            ]));
+        } catch (Exception $exception) {
+            log_message('error', 'Eco Bag Estimator save product error: ' . $exception->getMessage());
+            $this->output->set_status_header(400);
+            $this->output->set_output(json_encode([
+                'status'  => false,
+                'message' => $exception->getMessage(),
+            ]));
         }
-
-        $viewCandidates[] = module_dir_path('eco_bag_estimator', 'views/admin/index.php');
-
-        $viewFile = null;
-        foreach ($viewCandidates as $candidate) {
-            if ($candidate && is_file($candidate)) {
-                $viewFile = $candidate;
-                break;
-            }
-        }
-
-        if (!$viewFile) {
-            show_error('Eco Bag Estimator admin view could not be located.');
-        }
-
-        extract($data, EXTR_SKIP);
-        include $viewFile;
     }
 }
