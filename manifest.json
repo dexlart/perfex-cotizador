@@ -5,11 +5,14 @@
     "version": "1.0.0",
     "author": "Perfex Cotizador",
     "author_uri": "https://example.com",
+    "type": "module",
+    "module_name": "eco_bag_estimator",
     "min_app_version": "3.0.0",
     "requires_purchase_code": false,
     "files": [
         {
-            "module": "modules/eco_bag_estimator"
+            "from": "modules/eco_bag_estimator",
+            "to": "modules/eco_bag_estimator"
         }
     ]
 }
