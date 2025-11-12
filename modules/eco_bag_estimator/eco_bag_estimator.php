@@ -95,7 +95,12 @@ function eco_bag_estimator_add_footer_components()
         require_once module_dir_path('eco_bag_estimator', 'helpers/eco_bag_estimator_helper.php');
     }
     $models = json_encode(eco_bag_estimator_models(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    echo '<script>window.app = window.app || {}; app.options = app.options || {}; app.options.ecoBagEstimatorModels = ' . $models . ';</script>';
+    $products = json_encode(eco_bag_estimator_products(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $messages = json_encode([
+        'productDefaultsApplied' => _l('eco_bag_estimator_defaults_applied'),
+        'noPreviewData' => _l('eco_bag_estimator_preview_missing'),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    echo '<script>window.app = window.app || {}; app.options = app.options || {}; app.options.ecoBagEstimatorModels = ' . $models . '; app.options.ecoBagEstimatorProducts = ' . $products . '; app.options.ecoBagEstimatorMessages = ' . $messages . ';</script>';
     echo '<script src="' . module_dir_url('eco_bag_estimator', 'assets/js/eco_bag_estimator.js') . '"></script>';
 }
 

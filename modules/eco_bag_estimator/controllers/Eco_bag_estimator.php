@@ -17,8 +17,24 @@ class Eco_bag_estimator extends AdminController
         }
 
         $models = eco_bag_estimator_models();
+        $productsFlat = eco_bag_estimator_products();
+        $productsByCategory = eco_bag_estimator_products_by_category();
         $result = null;
         $formData = $this->input->post() ?: [];
+        $selectedProductSlug = $formData['product_slug'] ?? null;
+        $selectedProduct = $selectedProductSlug && isset($productsFlat[$selectedProductSlug])
+            ? array_merge(['slug' => $selectedProductSlug], $productsFlat[$selectedProductSlug])
+            : null;
+
+        if (!$selectedProduct && !empty($productsFlat)) {
+            $firstSlug = array_key_first($productsFlat);
+            $selectedProduct = array_merge(['slug' => $firstSlug], $productsFlat[$firstSlug]);
+            $selectedProductSlug = $firstSlug;
+
+            if (empty($formData)) {
+                $formData['product_slug'] = $firstSlug;
+            }
+        }
 
         if ($this->input->method() === 'post') {
             try {
@@ -32,10 +48,13 @@ class Eco_bag_estimator extends AdminController
         $data = [
             'title' => _l('eco_bag_estimator'),
             'models' => $models,
+            'productsByCategory' => $productsByCategory,
+            'productsFlat' => $productsFlat,
+            'selectedProduct' => $selectedProduct,
             'result' => $result,
             'formData' => $formData,
         ];
 
-        $this->load->view('eco_bag_estimator/index', $data);
+        $this->load->view('eco_bag_estimator/admin/index', $data);
     }
 }
