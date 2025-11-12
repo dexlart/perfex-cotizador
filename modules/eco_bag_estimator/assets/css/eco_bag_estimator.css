@@ -1,0 +1,22 @@
+.panel_s ._title {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.panel_s ._title::before {
+    font-family: 'FontAwesome';
+    content: '\f1b0';
+    color: #2d9c5d;
+}
+
+.panel_s .table tr.info td {
+    background-color: #e8f5e9;
+    font-weight: 600;
+}
+
+.panel_s .table tr.success td {
+    background-color: #c8e6c9;
+    font-weight: 600;
+}
