@@ -1,0 +1,189 @@
+#eco-bag-estimator-app {
+    position: relative;
+}
+
+#eco-bag-estimator-app .eco-bag-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(15, 43, 80, 0.08);
+    margin-bottom: 30px;
+    overflow: hidden;
+    border: 1px solid rgba(15, 43, 80, 0.08);
+}
+
+#eco-bag-estimator-app .eco-bag-card-header {
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid rgba(15, 43, 80, 0.08);
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.06), rgba(0, 201, 167, 0.06));
+}
+
+#eco-bag-estimator-app .eco-bag-card-body {
+    padding: 24px;
+}
+
+#eco-bag-estimator-app .eco-bag-card-title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 600;
+}
+
+#eco-bag-estimator-app .eco-bag-card-subtitle {
+    margin: 6px 0 0;
+}
+
+#eco-bag-estimator-app .eco-bag-form .form-group {
+    margin-bottom: 18px;
+}
+
+#eco-bag-estimator-app .form-control {
+    border-radius: 8px;
+    border-color: rgba(15, 43, 80, 0.2);
+    box-shadow: none;
+}
+
+#eco-bag-estimator-app .form-control:focus {
+    border-color: rgba(0, 201, 167, 0.8);
+    box-shadow: 0 0 0 0.2rem rgba(0, 201, 167, 0.15);
+}
+
+#eco-bag-estimator-app .slider-value {
+    margin-top: 8px;
+    font-weight: 600;
+    color: #0f2b50;
+}
+
+#eco-bag-estimator-app .preset-quantity {
+    min-width: 60px;
+    border-radius: 999px;
+}
+
+#eco-bag-estimator-app .eco-bag-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+#eco-bag-estimator-app .eco-bag-metric {
+    background: linear-gradient(135deg, rgba(0, 201, 167, 0.12), rgba(0, 123, 255, 0.08));
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    min-height: 110px;
+    position: relative;
+    overflow: hidden;
+}
+
+#eco-bag-estimator-app .eco-bag-metric::after {
+    content: '';
+    position: absolute;
+    right: -30px;
+    top: -30px;
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+}
+
+#eco-bag-estimator-app .eco-bag-metric-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(15, 43, 80, 0.7);
+    margin-bottom: 8px;
+    z-index: 1;
+}
+
+#eco-bag-estimator-app .eco-bag-metric-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f2b50;
+    z-index: 1;
+}
+
+#eco-bag-estimator-app .eco-bag-options-divider {
+    margin: 24px 0;
+    height: 1px;
+    background: rgba(15, 43, 80, 0.08);
+}
+
+#eco-bag-estimator-app .eco-bag-options-form .form-group {
+    margin-bottom: 18px;
+}
+
+#eco-bag-estimator-app .eco-bag-options-form .form-control[type='number']::-webkit-inner-spin-button,
+#eco-bag-estimator-app .eco-bag-options-form .form-control[type='number']::-webkit-outer-spin-button {
+    height: 30px;
+}
+
+#eco-bag-estimator-app .eco-bag-options-alert {
+    margin: 18px 0 0;
+}
+
+#eco-bag-estimator-app .eco-bag-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+#eco-bag-estimator-app .eco-bag-list li {
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(15, 43, 80, 0.04);
+    color: #0f2b50;
+    font-weight: 500;
+}
+
+#eco-bag-estimator-app .eco-bag-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 14px;
+}
+
+#eco-bag-estimator-app .eco-bag-actions {
+    margin-top: 24px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+#eco-bag-estimator-app .eco-bag-actions .btn {
+    min-width: 160px;
+    border-radius: 999px;
+}
+
+#eco-bag-estimator-app #eco-bag-results.hidden,
+#eco-bag-estimator-app #eco-bag-results-empty.hidden,
+#eco-bag-estimator-app #eco-bag-error.hidden,
+#eco-bag-estimator-app #eco-bag-success.hidden,
+#eco-bag-estimator-app #eco-bag-options-feedback.hidden {
+    display: none;
+}
+
+#eco-bag-estimator-app .alert {
+    border-radius: 10px;
+}
+
+#eco-bag-estimator-app .eco-bag-empty-state {
+    padding: 50px 20px;
+}
+
+#eco-bag-estimator-app .eco-bag-layout {
+    margin-top: 10px;
+}
+
+@media (max-width: 991px) {
+    #eco-bag-estimator-app .eco-bag-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #eco-bag-estimator-app .eco-bag-actions .btn {
+        width: 100%;
+    }
+
+    #eco-bag-estimator-app .eco-bag-card-body {
+        padding: 20px;
+    }
+}
